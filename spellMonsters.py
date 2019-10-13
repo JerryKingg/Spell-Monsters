@@ -1,18 +1,31 @@
-import random
+        self.maxhp=20
+        
+    def heal(self): #heals by half of player's total elemental skill
+        self.hp = self.hp + .5 *(self.airskill + self.fireskill + self.waterskill + self.earthskill)
+        if (self.hp > self.maxhp):
+            self.hp = self.maxhp
+            
+    def printPlayer(self):
+        print('/nPlayer stats: \n Health: {}/{} \n Air Skill: {} \n Fire Skill: {} \n Water Skill: {} \n Earth Skill: {} \n'.format(self.hp, self.maxhp, self.airskill, self.fireskill, self.waterskill, self.earthskill))
+    
+class Spell:
+    def __init__(self):
+        self.element = random.randrange(4)
+        self.damage = 9+random.randrange(6)
+        
+    def __init__(self, el, power):
+        self.element = el
+        self.damage = power
+    
+    
+class Monster:
+    def __init__(self):
+        self.element = random.randrange(4)
+        self.hp = 15
+        self.attack = random.randrange(4)
+    
 
-player = [1, 1, 1, 1, 20, 20] #(airSkill, fireSkill, waterSkill, earthSkill, maxHealth, health)
 
-spellbook = []
-monsters = []
-#row spell type's effectiveness against column monster type
-#               a    f    w    e    
-damageMatrix=[[.50, .75, 2.0, 1.0],# a
-              [2.0, .50, 1.0, .75],# f
-              [.75, 1.0, .50, 2.0],# w
-              [1.0, 2.0, .75, .50]]# e
-
-
-#return the name associated with a given element number
 def getElement(a):
     if (a == 0):
         return "Air"
@@ -23,105 +36,118 @@ def getElement(a):
     if (a == 3):
         return "Earth"
         
-        
-def makeSpellbook():
-    #spellbook = []        #make sure spellbook is empty
-    for i in range(4):         #build spellbook
-        spellbook.append([])   #make new list
-        spellbook[i].append(round(random.random()*3)) #spelltype
-        spellbook[i].append(round((random.random()*10)+10)) #spelldamage
 
-def printSpellbook():
-    for i, val in enumerate(spellbook):
-        print('Spell {}: '.format(i) + getElement(spellbook[i][0]) + " spell")
-        print('Damage: {} \n'.format( .5 * spellbook[i][1] * player[spellbook[i][0]] )) #Multiply base damage by the player's elemental skill
+def game(): #sets up a game and runs it till the player dies
+    player = Player()
+    spellbook = []
+    monsterGang = []
+    # row element's attack effectiveness against col element
+    #              a    f    w    e
+    rocPapSci=  ((0.5, .75, 1.0, 2.0), #air row
+                 (1.0, 0.5, 2.0, .75), #fire row
+                 (.75, 2.0, 0.5, 1.0), #water row
+                 (2.0, 1.0, .75, 0.5)) #earth row
     
-def makeMonsters():
-    #monsters = [] #make sure monster array is empty
-    for i in range(4):
-        monsters.append([])  #make new list
-        monsters[i].append(round(random.random()*3)) #generate type
-        monsters[i].append(round((player[0]+player[1]+player[2]+player[3])*(1+random.random()))) #generate health based on total player power
-        monsters[i].append(round(player[4]*random.random()*.75)) #generate attack power based on max player health
+    def printMonsters():#prints out each monster in the gang 
+        for i, val in enumerate(monsterGang):
+            print(getElement(monsterGang[i].element)+ ' monster {}:'.format(i))
+            print('Health: {}'.format(monsterGang[i].hp))
+            print('Attack: {} \n'.format(monsterGang[i].attack))
+                        
+    def printSpellbook():#prints out each spell in the list with it's attributes
+        for i, val in enumerate(spellbook):
+            spelldamage = .7
+            if(spellbook[i].element==0):
+                spelldamage = (spelldamage + (player.airskill*.3))*spellbook[i].damage
+            if(spellbook[i].element==1):
+                spelldamage = (spelldamage + (player.fireskill*.3))*spellbook[i].damage
+            if(spellbook[i].element==2):
+                spelldamage = (spelldamage + (player.waterskill*.3))*spellbook[i].damage
+            if(spellbook[i].element==3):
+                spelldamage = (spelldamage + (player.earthskill*.3))*spellbook[i].damage
+            print(getElement(spellbook[i].element) + 'spell {}'.format(i))
+            print('Damage: {} \n'.format(round(spelldamage,1)))
         
-def printMonsters():
-    for i, val in enumerate(monsters):
-        if(monsters[i][1] > 0):
-            print(getElement(monsters[i][0]) + ' monster{}:'.format(i))
-            print('HP: {} Attack: {} \n'.format(monsters[i][1], monsters[i][2]))
+    #fill spellbook with spells
+    for i in range(8):
+        spellbook.append(Spell(i%4,(7+random.randrange(6))))
         
-def printPlayer():
-        print('Player stats: \n HP: {}/{} \n Air Skill: {} \n Fire Skill: {} \n Water Skill: {} \n Earth Skill: {}'.format(player[4],player[5],player[0],player[1],player[2],player[3])) 
-    
-def healPlayer():
-    player[5] = player[5]+player[0]+player[1]+player[2]+player[3] #heal player by the sum of their skill
-    
-    if (player[5]>player[4]):
-        player[5]=player[4]
+    while (player.hp > 0):#game loop
         
+        #calaculate player power once per loop to efficeintly generate monsters
+        playerPower = player.airskill + player.fireskill + player.waterskill + player.earthskill
         
-def playerCombat():
-    print('Pick a spell:')
-    printSpellbook()
-    print('Spell Choice: ')
-    spell = int(input())
-    print('Pick a target:')
-    printMonsters()
-    print('Target: ')
-    target = int(input())
-    #damage = player's elemental skill level * base spell damage *  value from rock paper scissors matrix * 1/2 to make it less powerful
-    spellDamage = player[spellbook[spell][0]] * spellbook[spell][1] * damageMatrix[spellbook[spell][0]][monsters[target][0]] * .5
-    monsters[target][1] = monsters[target][1] - spellDamage
-    print('Monster {} took {} damage!'.format(target,spellDamage))
-    
-    #if the monster dies increase the player's corresponding elemental skill and remove the monster
-    if(monsters[target][1] < 0):
-        player[monsters[target][0]] = player[monsters[target][0]] + 1
-        print('The ' + getElement(monsters[target][0]) + ' monster is killed!')
-        print('your ' + getElement(monsters[target][0]) + ' skill is increased by 1!')
-        monsters.pop(target)
-    
+        if(monsterGang == []): #if there are no monsters make some
+            for i in range(3):
+                monsterGang.append(Monster()) #create a monster
+                monsterGang[i].hp = monsterGang[i].hp * playerPower * .22 #scale monster hp by player power
+                monsterGang[i].attack = (monsterGang[i].attack + (.1 * player.maxhp)) #scale monster attack strengh by a mixture of player health and player defense
         
-    
-
-def playerTurn():
-    printPlayer()
-    print('What will you do? \n Heal \n Attack \n Decision:')
-    decision = input()
-    if (decision == 'heal'):
-        healPlayer()
-    if (decision == 'attack'):
+        player.printPlayer()
+        
+        #player's turn
+        print('you are confronted by {} monsters \n'.format(len(monsterGang)))
         printMonsters()
-        playerCombat()
-    
-
-def monsterTurn():
-    liveMonsters = 0
-    for i, val in enumerate(monsters):
-        if(monsters[i][1] > 0):
-            damage = (monsters[i][2]/player[monsters[i][0]])#divide monster damage by player elemental skill
-            player[5] = player[5]- damage #damage player's health
-            print(getElement(monsters[i][0]) + ' monster dealt {} damage to you'.format(damage))
-            printPlayer()
-            liveMonsters = liveMonsters + 1
+        print('What will you do? \n Attack: 1 \n Heal: 2' )
+        selection = input('Response: ')
+        
+        if(int(selection) == 2): #heal the player
+            player.heal()
             
-    if (liveMonsters == 0): #if all monsters are dead regenerate monsters
-        print('The final monster lies dead before you, yet you hear strrange noises in the distance..')        
-        makeMonsters()
-        player[4]=player[4]+4
-        healPlayer()
-        
-    
-        
-def game():
-    makeSpellbook()
-    makeMonsters()
-    while(player[5]>0):
-            playerTurn()
-            monsterTurn()
+        else:  #begin combat
+            print('\nPick a spell: \n')
+            printSpellbook()  
+            spell = int(input('Spell:'))
+            print('\nSelect target:')
+            printMonsters()
+            target = int(input('Target:'))
             
-    print('You Died')
-    
+            spelldamage=.7 #base damage
+                           #damage is scaled by player's elemental skill
+            if(spellbook[spell].element==0):
+                spelldamage = spelldamage + (player.airskill*.3)
+            if(spellbook[spell].element==1):
+                spelldamage = spelldamage + (player.fireskill*.3)
+            if(spellbook[spell].element==2):
+                spelldamage = spelldamage + (player.waterskill*.3)
+            if(spellbook[spell].element==3):
+                spelldamage = spelldamage + (player.earthskill*.3)
+            
+            #use the rock paper scissors matrix to modify elemental spell damage besed on monster's element
+            spelldamage = round(spelldamage*(spellbook[spell].damage * rocPapSci[spellbook[spell].element][monsterGang[target].element]),1)
+            
+            monsterGang[target].hp = round(monsterGang[target].hp - spelldamage,1)
+            print('\n' + getElement(monsterGang[target].element) + ' monster took {} damage!'.format(spelldamage))
+            
+            if(monsterGang[target].hp <= 0): #if the monster is killed
+                
+                #level up the player
+                if(monsterGang[target].element==0):
+                    player.airskill = player.airskill +1
+                if(monsterGang[target].element==1):
+                    player.fireskill = player.fireskill +1
+                if(monsterGang[target].element==2):
+                    player.waterskill = player.waterskill +1
+                if(monsterGang[target].element==3):
+                    player.earthskill = player.earthskill +1
+                    
+                print(getElement(monsterGang[target].element) + 'monster was killed! \nYour ' + getElement(monsterGang[target].element) + ' skill is increased by 1!\n')
+                monsterGang.pop(target)#destroy the targeted monster
 
         
         
+        #monsters' turn
+        if(monsterGang == []): #check if all monsters are dead
+            player.maxhp = player.maxhp + 3 #level up player health
+            print('The final monster lies dead before you, yet you hear something in the distance..')
+            player.hp = player.maxhp #heal player to max
+            
+        else: #all remaining monsters attack
+        
+            for i, monster in enumerate(monsterGang):
+                player.hp = round(player.hp - monster.attack, 1)
+                print('\n'+getElement(monster.element) + ' monster dealt {} damage to you! \n'.format(monster.attack))
+                print('Health: {}/{} \n'.format(player.hp,player.maxhp))
+            
+    print('You died!')
+    print('Score: {}'.format(player.airskill + player.fireskill + player.waterskill + player.earthskill))
